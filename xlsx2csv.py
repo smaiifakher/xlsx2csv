@@ -128,8 +128,10 @@ CONTENT_TYPES = {
 DEFAULT_APP_PATH = "/xl"
 DEFAULT_WORKBOOK_PATH = DEFAULT_APP_PATH + "/workbook.xml"
 
+
 def eprint(*args, **kwargs):
     print(*args, file=sys.stderr, **kwargs)
+
 
 class XlsxException(Exception):
     pass
@@ -272,7 +274,8 @@ class Xlsx2csv:
                 if isinstance(outfile, str):
                     of = os.path.join(outfile, sheetname + '.csv')
                 elif self.options['sheetdelimiter'] and len(self.options['sheetdelimiter']):
-                    of.write(self.options['sheetdelimiter'] + " " + str(s['index']) + " - " + sheetname + self.options['lineterminator'])
+                    of.write(self.options['sheetdelimiter'] + " " + str(s['index']) + " - " + sheetname + self.options[
+                        'lineterminator'])
                 self._convert(s['index'], of)
 
     def _convert(self, sheet_index, outfile):
@@ -301,7 +304,7 @@ class Xlsx2csv:
 
                 relation_id = sheets_filtered[0]['relation_id']
                 if relation_id in self.workbook.relationships.relationships and \
-                                'target' in self.workbook.relationships.relationships[relation_id]:
+                        'target' in self.workbook.relationships.relationships[relation_id]:
                     relationship = self.workbook.relationships.relationships[relation_id]
                     sheet_path = relationship['target']
                     if not (sheet_path.startswith("/xl/") or sheet_path.startswith("xl/")):
@@ -432,7 +435,7 @@ class Workbook:
                     'name': name,
                     'relation_id': relation_id,
                     'index': i + 1,
-                    'id': i + 1, # remove id starting 0.8.0 version
+                    'id': i + 1,  # remove id starting 0.8.0 version
                     'state': state
                 }
             )
@@ -531,7 +534,7 @@ class Styles:
         if len(cellXfsElement) == 1:
             for cellXfs in cellXfsElement[0].childNodes:
                 if cellXfs.nodeType != minidom.Node.ELEMENT_NODE or not (
-                                cellXfs.nodeName == "xf" or cellXfs.nodeName.endswith(":xf")):
+                        cellXfs.nodeName == "xf" or cellXfs.nodeName.endswith(":xf")):
                     continue
                 if cellXfs._attrs and 'numFmtId' in cellXfs._attrs:
                     numFmtId = int(cellXfs._attrs['numFmtId'].value)
@@ -819,7 +822,7 @@ class Sheet:
                     else:
                         format_type = "date"
                 elif re.match("^-?\d+(.\d+)?$", self.data) or (
-                            self.scifloat and re.match("^-?\d+(.\d+)?([eE]-?\d+)?$", self.data)):
+                        self.scifloat and re.match("^-?\d+(.\d+)?([eE]-?\d+)?$", self.data)):
                     format_type = "float"
                 if format_type == 'date' and self.dateformat == 'float':
                     format_type = "float"
@@ -879,18 +882,18 @@ class Sheet:
             self.s_attr = attrs.get("s")
             self.cellId = attrs.get("r")
             if self.cellId:
-                self.colNum = self.cellId[:len(self.cellId) - len(self.rowNum)]
+                self.colNum = self.cellId[:len(self.cellId) - len(str(round(float(self.rowNum))))]
                 self.colIndex = 0
             else:
                 self.colIndex += 1
             self.data = ""
             self.in_cell = True
         elif self.in_cell and (
-                    (name == 'v' or name == 'is') or (has_namespace and (name.endswith(':v') or name.endswith(':is')))):
+                (name == 'v' or name == 'is') or (has_namespace and (name.endswith(':v') or name.endswith(':is')))):
             self.in_cell_value = True
             self.collected_string = ""
         elif self.in_sheet and (name == 'row' or (has_namespace and name.endswith(':row'))) and ('r' in attrs):
-            self.rowNum = attrs['r']
+            self.rowNum = str(round(float(attrs['r'])))
             self.in_row = True
             self.colIndex = 0
             self.colNum = ""
@@ -919,19 +922,22 @@ class Sheet:
     def handleEndElement(self, name):
         has_namespace = name.find(":") > 0
         if self.in_cell and ((name == 'v' or name == 'is' or name == 't') or (
-                    has_namespace and (name.endswith(':v') or name.endswith(':is')))):
+                has_namespace and (name.endswith(':v') or name.endswith(':is')))):
             self.in_cell_value = False
         elif self.in_cell and (name == 'c' or (has_namespace and name.endswith(':c'))):
             t = 0
-            for i in self.colNum: t = t * 26 + ord(i) - 64
+            for i in self.colNum:
+                t = t * 26 + ord(i) - 64
             d = self.data
             if self.hyperlinks:
                 hyperlink = self.hyperlinks.get(self.cellId)
                 if hyperlink:
                     d = "<a href='" + hyperlink + "'>" + d + "</a>"
+            print(self.rowNum)
             if self.colNum + self.rowNum in self.mergeCells.keys():
+
                 if 'copyFrom' in self.mergeCells[self.colNum + self.rowNum].keys() and \
-                                self.mergeCells[self.colNum + self.rowNum]['copyFrom'] == self.colNum + self.rowNum:
+                        self.mergeCells[self.colNum + self.rowNum]['copyFrom'] == self.colNum + self.rowNum:
                     self.mergeCells[self.colNum + self.rowNum]['value'] = d
                 else:
                     d = self.mergeCells[self.mergeCells[self.colNum + self.rowNum]['copyFrom']]['value']
@@ -940,7 +946,7 @@ class Sheet:
 
         if self.in_row and (name == 'row' or (has_namespace and name.endswith(':row'))):
             if len(self.columns.keys()) > 0:
-                if min(self.columns.keys()) < 0: # Weird
+                if min(self.columns.keys()) < 0:  # Weird
                     d = []
                     keys = self.columns.keys()
                     keys.sort()
@@ -963,9 +969,9 @@ class Sheet:
 
                 # write empty lines
                 if not self.skip_empty_lines:
-                    for i in range(self.lastRowNum, int(self.rowNum) - 1):
+                    for i in range(self.lastRowNum, int(round(float(self.rowNum))) - 1):
                         self.writer.writerow([])
-                    self.lastRowNum = int(self.rowNum)
+                    self.lastRowNum = int(round(float(self.rowNum)))
 
                 # write line to csv
                 if not self.skip_empty_lines or d.count('') != len(d):
@@ -1066,7 +1072,8 @@ if __name__ == "__main__":
                         help="include hyperlinks")
     parser.add_argument("-e", "--escape", dest='escape_strings', default=False, action="store_true",
                         help="Escape \\r\\n\\t characters")
-    parser.add_argument("--no-line-breaks", "--no-line-breaks", dest='no_line_breaks', default=False, action="store_true",
+    parser.add_argument("--no-line-breaks", "--no-line-breaks", dest='no_line_breaks', default=False,
+                        action="store_true",
                         help="Replace \\r\\n\\t with space")
     parser.add_argument("-E", "--exclude_sheet_pattern", nargs=nargs_plus, dest="exclude_sheet_pattern", default="",
                         help="exclude sheets named matching given pattern, only effects when -a option is enabled.")

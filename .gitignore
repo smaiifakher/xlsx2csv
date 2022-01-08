@@ -44,3 +44,7 @@ nosetests.xml
 
 # PyCharm
 .idea
+/test/record.csv
+/test/record.xlsx
+/test/record1.csv
+/test/
