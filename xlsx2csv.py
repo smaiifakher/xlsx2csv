@@ -933,7 +933,6 @@ class Sheet:
                 hyperlink = self.hyperlinks.get(self.cellId)
                 if hyperlink:
                     d = "<a href='" + hyperlink + "'>" + d + "</a>"
-            print(self.rowNum)
             if self.colNum + self.rowNum in self.mergeCells.keys():
 
                 if 'copyFrom' in self.mergeCells[self.colNum + self.rowNum].keys() and \
@@ -969,9 +968,9 @@ class Sheet:
 
                 # write empty lines
                 if not self.skip_empty_lines:
-                    for i in range(self.lastRowNum, int(round(float(self.rowNum))) - 1):
+                    for i in range(self.lastRowNum, int(self.rowNum) - 1):
                         self.writer.writerow([])
-                    self.lastRowNum = int(round(float(self.rowNum)))
+                    self.lastRowNum = int(self.rowNum)
 
                 # write line to csv
                 if not self.skip_empty_lines or d.count('') != len(d):
